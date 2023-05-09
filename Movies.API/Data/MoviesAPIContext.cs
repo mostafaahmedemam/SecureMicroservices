@@ -7,9 +7,9 @@ using Movies.API.Model;
 
 namespace Movies.API.Data
 {
-    public class MoviesAPIContext : DbContext
+    public class MoviesContext  : DbContext
     {
-        public MoviesAPIContext (DbContextOptions<MoviesAPIContext> options)
+        public MoviesContext (DbContextOptions<MoviesContext> options)
             : base(options)
         {
         }
