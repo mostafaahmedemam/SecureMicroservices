@@ -12,7 +12,7 @@ namespace Movies.API.Controllers
     [ApiController]
     [Authorize]
     public class IdentityController : ControllerBase
-    {
+    { 
         [HttpGet]
         public IActionResult Get()
         {

@@ -16,8 +16,8 @@ namespace Movies.Api.Controllers
     [Authorize("ClientIdPolicy")]
     public class MoviesController : ControllerBase
     {
-        private readonly MoviesContext _context;
-
+        private readonly MoviesContext _context; 
+         
         public MoviesController(MoviesContext context)
         {
             _context = context;
