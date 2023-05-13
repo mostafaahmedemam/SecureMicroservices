@@ -1,4 +1,6 @@
-﻿namespace Movies.API.Model
+﻿using System;
+
+namespace Movies.API.Model
 {
     public class Movie
     {

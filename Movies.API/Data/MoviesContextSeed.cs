@@ -1,4 +1,7 @@
 ﻿using Movies.API.Model;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Movies.API.Data
 {
