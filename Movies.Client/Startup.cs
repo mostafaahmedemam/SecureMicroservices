@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using IdentityModel;
+using IdentityModel.Client;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
@@ -6,7 +8,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Net.Http.Headers;
 using Movies.Client.ApiServices;
+using Movies.Client.HttpHandlers;
+using System;
 
 namespace Movies.Client
 {
@@ -24,6 +30,33 @@ namespace Movies.Client
         {
             services.AddControllersWithViews();
             services.AddScoped<IMovieApiServices, MovieApiServices>();
+
+            services.AddTransient<AuthenticationDelegatingHandler>();
+
+            services.AddHttpClient("MovieAPIClient", client =>
+            {
+                client.BaseAddress = new Uri("https://localhost:5010/"); // API GATEWAY URL
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
+            }).AddHttpMessageHandler<AuthenticationDelegatingHandler>();
+
+            // 2 create an HttpClient used for accessing the IDP
+            services.AddHttpClient("IDPClient", client =>
+            {
+                client.BaseAddress = new Uri("https://localhost:5005/");
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
+            });
+
+            services.AddHttpContextAccessor();
+
+            //services.AddSingleton(new ClientCredentialsTokenRequest { 
+            //Address= "https://localhost:5005/connect/token",
+            //ClientId="movieClient",
+            //ClientSecret="secret",
+            //Scope="movieAPI"
+            //});
+
             services.AddAuthentication(options =>
             {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -43,6 +76,7 @@ namespace Movies.Client
                    options.Scope.Add("address");
                    options.Scope.Add("email");
                    options.Scope.Add("roles");
+                   options.Scope.Add("movieAPI");
 
                    options.ClaimActions.DeleteClaim("sid");
                    options.ClaimActions.DeleteClaim("idp");
@@ -50,10 +84,15 @@ namespace Movies.Client
                    options.ClaimActions.DeleteClaim("auth_time");
                    options.ClaimActions.MapUniqueJsonKey("role", "role");
 
-                   options.Scope.Add("movieAPI");
 
                    options.SaveTokens = true;
                    options.GetClaimsFromUserInfoEndpoint = true;
+
+                   options.TokenValidationParameters = new TokenValidationParameters
+                   {
+                       NameClaimType = JwtClaimTypes.GivenName,
+                       RoleClaimType = JwtClaimTypes.Role
+                   };
                });
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -73,7 +112,7 @@ namespace Movies.Client
             app.UseStaticFiles();
 
             app.UseRouting();
-
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
